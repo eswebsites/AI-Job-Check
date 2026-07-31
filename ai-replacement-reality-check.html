@@ -1,0 +1,1266 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The reality check — will AI actually save you money?</title>
+<meta name="description" content="Model the real cost and quality impact of replacing a role with AI, including the oversight, residual work, and rework that rarely make it into the business case.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+  :root{
+    --bg:#0A0C10; --surface:#12151B; --surface-2:#181D26;
+    --border:#242938; --border-soft:#1A1F2A;
+    --text:#E7E9EE; --text-muted:#8890A0;
+    --accent:#5B8DEF; --accent-soft:rgba(91,141,239,.12);
+    --gain:#2FC7A0; --loss:#F1685C; --warn:#E8B34A;
+    --glow:47,199,160;
+  }
+  *{box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  @media (prefers-reduced-motion:reduce){ html{scroll-behavior:auto;} }
+  body{margin:0; background:var(--bg); color:var(--text); font-family:'Inter',system-ui,sans-serif; line-height:1.6; -webkit-font-smoothing:antialiased;}
+  .wrap{max-width:1120px; margin:0 auto; padding:0 28px;}
+  a{color:var(--accent);}
+  :focus-visible{outline:2px solid var(--accent); outline-offset:2px; border-radius:4px;}
+
+  .topbar{position:sticky; top:0; z-index:60; background:var(--bg); display:flex; align-items:center; justify-content:space-between; gap:16px; padding:20px 28px; border-bottom:1px solid var(--border-soft); flex-wrap:wrap;}
+  .brand{display:flex; align-items:center; gap:10px; font-family:'Space Grotesk',sans-serif; font-weight:600; font-size:15px;}
+  .brand-dot{width:8px; height:8px; border-radius:2px; background:var(--accent); box-shadow:0 0 12px var(--accent);}
+  .topnav{display:flex; gap:20px; flex-wrap:wrap;}
+  .topnav a{color:var(--text-muted); text-decoration:none; font-size:12.5px; font-family:'IBM Plex Mono',monospace;}
+  .topnav a:hover{color:var(--text);}
+
+  header.hero{padding:88px 28px 64px; position:relative; overflow:hidden;}
+  header.hero::before{
+    content:""; position:absolute; top:-200px; left:0; right:0; height:640px; pointer-events:none;
+    background:
+      /* core, sitting behind the headline rather than centred on the viewport */
+      radial-gradient(44rem 24rem at 27% 44%,
+        rgba(var(--glow),.15) 0%, rgba(var(--glow),.088) 32%,
+        rgba(var(--glow),.032) 54%, rgba(var(--glow),0) 72%),
+      /* broad ambient wash to keep the falloff from ending abruptly */
+      radial-gradient(72rem 34rem at 48% 28%,
+        rgba(var(--glow),.055) 0%, rgba(var(--glow),.022) 44%, rgba(var(--glow),0) 74%);
+  }
+  .eyebrow{font-family:'IBM Plex Mono',monospace; font-size:12.5px; letter-spacing:.14em; text-transform:uppercase; color:var(--accent); margin:0 0 20px; position:relative;}
+  h1{font-family:'Space Grotesk',sans-serif; font-weight:600; font-size:clamp(31px,4.8vw,50px); line-height:1.12; margin:0 0 20px; max-width:780px; letter-spacing:-0.01em; position:relative;}
+  .sub{font-size:17px; color:var(--text-muted); max-width:620px; margin:0; position:relative;}
+
+  main{background:var(--bg); padding:8px 0 40px; position:relative;}
+  main::before{
+    content:""; position:absolute; top:0; left:0; right:0; height:1px;
+    background:linear-gradient(90deg,
+      rgba(var(--glow),0) 0%, rgba(var(--glow),.28) 32%,
+      rgba(var(--glow),.28) 62%, rgba(var(--glow),0) 100%);
+  }
+  section{padding:0 0 60px; scroll-margin-top:84px;}
+  h2{font-family:'Space Grotesk',sans-serif; font-weight:600; font-size:23px; margin:0 0 8px; letter-spacing:-.005em;}
+  h3.step{font-family:'IBM Plex Mono',monospace; font-size:11.5px; text-transform:uppercase; letter-spacing:.08em; color:var(--accent); margin:26px 0 12px; font-weight:500;}
+  h3.step:first-of-type{margin-top:0;}
+  .section-note{color:var(--text-muted); font-size:14.5px; margin:0 0 26px; max-width:660px;}
+  .grid{display:grid; grid-template-columns:1fr 1fr; gap:36px; align-items:start;}
+  @media (max-width:900px){ .grid{grid-template-columns:1fr;} }
+  @media (max-width:560px){ .row3{grid-template-columns:1fr 1fr;} }
+
+  label{display:block; font-family:'IBM Plex Mono',monospace; font-size:11.5px; text-transform:uppercase; letter-spacing:.06em; color:var(--text-muted); margin-bottom:7px;}
+  input[type=number], select{
+    width:100%; padding:10px 12px; font-size:14.5px; font-family:'Inter',sans-serif;
+    border:1px solid var(--border); border-radius:7px; background:var(--surface); color:var(--text);
+  }
+  input[type=number]:focus, select:focus{ outline:none; border-color:var(--accent); box-shadow:0 0 0 3px var(--accent-soft); }
+  input[type=range]{width:100%; accent-color:var(--accent);}
+  .field{margin-bottom:18px;}
+  .row3{display:grid; grid-template-columns:1fr 1fr 1fr; gap:14px;}
+  .row2{display:grid; grid-template-columns:1fr 1fr; gap:14px;}
+  .hint{font-size:11.5px; color:var(--text-muted); margin:6px 0 0; line-height:1.45; font-family:'Inter',sans-serif;}
+  .warnline{font-size:12px; color:var(--warn); margin:8px 0 0; font-family:'Inter',sans-serif;}
+  .warnline:empty{display:none;}
+
+  .tabs{display:flex; gap:6px; margin-bottom:18px; flex-wrap:wrap; background:var(--surface); border:1px solid var(--border); border-radius:9px; padding:4px;}
+  .tab{font-family:'IBM Plex Mono',monospace; font-size:12.5px; padding:9px 14px; border-radius:6px; border:none; background:transparent; color:var(--text-muted); cursor:pointer;}
+  .tab.active{background:var(--accent); color:#08101F; font-weight:500;}
+  .tab:hover:not(.active){color:var(--text);}
+  .modelfields{display:none;}
+  .modelfields.active{display:block;}
+
+  .segmented{display:inline-flex; gap:4px; background:var(--surface); border:1px solid var(--border); border-radius:8px; padding:4px;}
+  .segmented button{font-family:'IBM Plex Mono',monospace; font-size:12px; padding:7px 12px; border-radius:5px; border:none; background:transparent; color:var(--text-muted); cursor:pointer;}
+  .segmented button[aria-pressed="true"]{background:var(--accent); color:#08101F; font-weight:500;}
+
+  /* save & share menu */
+  .topbar-right{display:flex; align-items:center; gap:22px; flex-wrap:wrap;}
+  .actions{position:relative;}
+  .actions-trigger{
+    display:inline-flex; align-items:center; gap:9px; cursor:pointer;
+    font-family:'IBM Plex Mono',monospace; font-size:12px; padding:8px 13px; border-radius:7px;
+    border:1px solid var(--border); background:var(--surface); color:var(--text);
+  }
+  .actions-trigger:hover, .actions-trigger[aria-expanded="true"]{border-color:var(--accent); color:var(--accent);}
+  .actions-caret{
+    width:7px; height:7px; border-right:1.5px solid currentColor; border-bottom:1.5px solid currentColor;
+    transform:translateY(-2px) rotate(45deg); transition:transform .18s ease;
+  }
+  .actions-trigger[aria-expanded="true"] .actions-caret{transform:translateY(1px) rotate(-135deg);}
+  .actions-panel{
+    position:absolute; top:calc(100% + 9px); right:0; z-index:70; min-width:214px;
+    background:var(--surface-2); border:1px solid var(--border); border-radius:10px; padding:6px;
+    box-shadow:0 18px 44px rgba(0,0,0,.45); display:grid; gap:2px;
+    transform-origin:top right; opacity:0; transform:translateY(-8px) scale(.96); visibility:hidden;
+    transition:opacity .16s ease, transform .16s ease, visibility 0s linear .16s;
+  }
+  .actions-panel.open{opacity:1; transform:none; visibility:visible; transition:opacity .16s ease, transform .16s ease, visibility 0s;}
+  .actions-panel button{
+    width:100%; text-align:left; cursor:pointer; border:none; background:transparent; color:var(--text);
+    font-family:'IBM Plex Mono',monospace; font-size:12px; padding:9px 11px; border-radius:6px;
+  }
+  .actions-panel button:hover{background:var(--accent-soft); color:var(--accent);}
+  .actions-toast{
+    position:absolute; top:calc(100% + 9px); right:0; z-index:65; margin:0; max-width:270px;
+    font-family:'Inter',sans-serif; font-size:11.5px; line-height:1.4; color:var(--gain);
+    background:var(--surface-2); border:1px solid var(--border); border-radius:8px; padding:9px 11px;
+    box-shadow:0 14px 34px rgba(0,0,0,.4);
+  }
+  .actions-toast:empty{display:none;}
+  @media (max-width:560px){
+    .topbar-right{gap:12px; width:100%; justify-content:space-between;}
+    .actions-panel, .actions-toast{right:auto; left:0; transform-origin:top left;}
+  }
+  .price-status{font-size:11.5px; color:var(--text-muted); margin-top:10px;}
+
+  /* receipt */
+  .sticky-col{position:sticky; top:20px;}
+  @media (max-width:900px){ .sticky-col{position:static;} }
+  .receipt{
+    background:var(--surface); width:100%; padding:26px 24px;
+    font-family:'IBM Plex Mono',monospace; font-size:13.5px; color:var(--text);
+    border:1px solid var(--border); border-radius:12px;
+    box-shadow:0 24px 60px rgba(0,0,0,.35);
+  }
+  .receipt-title{font-family:'Space Grotesk',sans-serif; font-size:15px; font-weight:600; margin:0 0 2px;}
+  .receipt-sub{color:var(--text-muted); font-size:11px; margin:0 0 18px;}
+  .rline{display:flex; justify-content:space-between; gap:12px; padding:7px 0; border-bottom:1px solid var(--border);}
+  .rline span:first-child{color:var(--text-muted);}
+  .rline.head span:first-child{color:var(--text); font-weight:500;}
+  .rline.total{border-bottom:none; border-top:1px solid var(--border); margin-top:6px; padding-top:11px; font-weight:600; font-size:15px;}
+  .rline.total span:first-child{color:var(--text);}
+  .stamp{
+    font-family:'Space Grotesk',sans-serif; font-weight:600; text-align:center; letter-spacing:.02em;
+    font-size:15px; border-radius:8px; padding:11px; margin-top:18px; border:1px solid;
+  }
+  .stamp.gain{color:var(--gain); border-color:var(--gain); background:rgba(47,199,160,.08);}
+  .stamp.loss{color:var(--loss); border-color:var(--loss); background:rgba(241,104,92,.08);}
+  .stamp.even{color:var(--warn); border-color:var(--warn); background:rgba(232,179,74,.08);}
+  .rnote{font-size:11.5px; color:var(--text-muted); margin-top:14px; line-height:1.5; font-family:'Inter',sans-serif;}
+
+  /* stacked comparison */
+  .compare{margin-top:18px;}
+  .cmp-row{margin-bottom:12px;}
+  .cmp-label{display:flex; justify-content:space-between; font-family:'IBM Plex Mono',monospace; font-size:11px; color:var(--text-muted); margin-bottom:5px;}
+  .cmp-bar{display:flex; height:16px; border-radius:4px; overflow:hidden; background:var(--surface-2);}
+  .cmp-seg{height:100%;}
+  .cmp-key{display:flex; flex-wrap:wrap; gap:10px 14px; margin-top:10px; font-family:'IBM Plex Mono',monospace; font-size:10.5px; color:var(--text-muted);}
+  .cmp-key span{display:flex; align-items:center; gap:5px;}
+  .swatch{width:9px; height:9px; border-radius:2px; display:inline-block;}
+
+  .card{background:var(--surface); border:1px solid var(--border); border-radius:10px; padding:20px 22px;}
+  .card + .card{margin-top:14px;}
+  .card h3{font-family:'IBM Plex Mono',monospace; font-size:11.5px; text-transform:uppercase; letter-spacing:.06em; margin:0 0 8px; color:var(--text-muted);}
+  .card p{margin:0; font-size:14.5px; color:var(--text);}
+  .card p + p{margin-top:10px;}
+
+  /* mode choice */
+  .modecards{display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:8px;}
+  @media (max-width:560px){ .modecards{grid-template-columns:1fr;} }
+  .modecard{text-align:left; padding:14px 16px; border-radius:9px; border:1px solid var(--border); background:var(--surface); cursor:pointer; font-family:'Inter',sans-serif;}
+  .modecard[aria-pressed="true"]{border-color:var(--accent); background:var(--accent-soft);}
+  .modecard strong{display:block; font-family:'Space Grotesk',sans-serif; font-size:14.5px; font-weight:600; color:var(--text); margin-bottom:3px;}
+  .modecard span{display:block; font-size:12.5px; line-height:1.4; color:var(--text-muted);}
+
+  /* quality */
+  .qbands{display:grid; grid-template-columns:repeat(4,1fr); gap:6px;}
+  @media (max-width:640px){ .qbands{grid-template-columns:1fr 1fr;} }
+  .qbandchip{padding:11px 10px; border-radius:7px; border:1px solid var(--border); background:var(--surface-2); text-align:center; font-family:'IBM Plex Mono',monospace; font-size:11.5px; line-height:1.3; color:var(--text-muted);}
+  .qbandchip.on{font-weight:500;}
+  .qbandchip.on.gain{border-color:var(--gain); background:rgba(47,199,160,.1); color:var(--gain);}
+  .qbandchip.on.warn{border-color:var(--warn); background:rgba(232,179,74,.1); color:var(--warn);}
+  .qbandchip.on.loss{border-color:var(--loss); background:rgba(241,104,92,.1); color:var(--loss);}
+  .qbars{margin-top:22px; display:grid; gap:14px;}
+  .qbar-label{display:flex; justify-content:space-between; gap:12px; font-size:13px; margin-bottom:6px;}
+  .qbar-delta{font-family:'IBM Plex Mono',monospace; font-size:12px;}
+  .qtrack{position:relative; height:8px; background:var(--surface-2); border-radius:4px;}
+  .qbase{position:absolute; left:50%; top:-4px; bottom:-4px; width:1px; background:var(--text-muted); opacity:.55;}
+  .qfill{position:absolute; top:0; bottom:0; border-radius:4px;}
+  .qcaption{font-size:11.5px; color:var(--text-muted); margin-top:6px;}
+  .qlegend{font-family:'IBM Plex Mono',monospace; font-size:10.5px; color:var(--text-muted); margin-top:14px;}
+  .qlists{display:grid; grid-template-columns:1fr 1fr; gap:20px; margin-top:22px;}
+  @media (max-width:640px){ .qlists{grid-template-columns:1fr;} }
+  .qlists h4{font-family:'IBM Plex Mono',monospace; font-size:11px; text-transform:uppercase; letter-spacing:.06em; margin:0 0 8px; color:var(--text-muted); font-weight:500;}
+  .qlists ul{list-style:none; padding:0; margin:0; display:grid; gap:8px;}
+  .qlists li{font-size:13.5px; padding-left:18px; position:relative; line-height:1.45;}
+  .qlists li::before{position:absolute; left:0; font-family:'IBM Plex Mono',monospace;}
+  .qgain li::before{content:"+"; color:var(--gain);}
+  .qloss li::before{content:"−"; color:var(--loss);}
+
+  .checklist{list-style:none; padding:0; margin:0; display:grid; gap:12px;}
+  .checklist li{padding-left:22px; position:relative; font-size:14.5px; color:var(--text);}
+  .checklist li::before{content:"→"; position:absolute; left:0; color:var(--accent); font-family:'IBM Plex Mono',monospace;}
+
+  .chart-fallback{display:none; font-size:13.5px; color:var(--text-muted);}
+  footer{padding:32px 28px 48px; text-align:center; color:var(--text-muted); font-size:12.5px; border-top:1px solid var(--border-soft);}
+
+  @media (prefers-reduced-motion:reduce){ *{transition:none !important; animation:none !important;} }
+
+  @media print{
+    :root{--text:#111; --text-muted:#555; --border:#ccc; --surface:#fff; --surface-2:#eee; --bg:#fff;}
+    body{background:#fff; color:#111;}
+    header.hero::before, main::before{display:none;}
+    header.hero{padding:0 0 20px;}
+    .eyebrow{color:#111;}
+    main{border-top:none; padding:0;}
+    .actions, .tabs, .topbar, footer, .segmented, input[type=range]{display:none !important;}
+    .grid{grid-template-columns:1fr 1fr; gap:20px;}
+    .card, .receipt{background:#fff; border:1px solid #ccc; box-shadow:none; break-inside:avoid;}
+    .receipt, .receipt-title, .rline span, .card p, .qlists li{color:#111 !important;}
+    .qtrack{background:#eee;}
+    section{padding-bottom:24px; break-inside:avoid;}
+    a{color:#111; text-decoration:underline;}
+  }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="brand"><span class="brand-dot"></span>AI Reality Check</div>
+  <div class="topbar-right">
+    <nav class="topnav">
+      <a href="#calculator">Calculator</a>
+      <a href="#quality">Quality impact</a>
+      <a href="#breakeven">Breakeven</a>
+      <a href="#hidden-costs">What's not priced in</a>
+    </nav>
+    <div class="actions" id="actions">
+      <button type="button" class="actions-trigger" id="actions-trigger"
+              aria-expanded="false" aria-controls="actions-panel" aria-haspopup="true">
+        Save &amp; share <i class="actions-caret" aria-hidden="true"></i>
+      </button>
+      <div class="actions-panel" id="actions-panel" role="group" aria-label="Save and share">
+        <button id="btn-link" type="button">Copy shareable link</button>
+        <button id="btn-summary" type="button">Copy summary</button>
+        <button id="btn-print" type="button">Save as PDF</button>
+        <button id="btn-reset" type="button">Reset to defaults</button>
+      </div>
+      <p class="actions-toast" id="toolbar-status" role="status" aria-live="polite"></p>
+    </div>
+  </div>
+</div>
+
+<header class="hero">
+  <div class="wrap">
+    <p class="eyebrow">The reality check</p>
+    <h1>Will replacing this employee with AI actually save you money?</h1>
+    <p class="sub">Describe the job, the AI you're planning to buy, and how it would really be used. This runs the full math — the oversight hours, the work AI can't take, and the cleanup when it gets things wrong — and tells you what happens to the quality of the output.</p>
+  </div>
+</header>
+
+<main>
+  <div class="wrap">
+
+    <section id="calculator">
+      <h2>Run the numbers</h2>
+      <p class="section-note">Defaults are set for a mid-size support role. Change anything that doesn't match your situation — every field feeds the summary on the right.</p>
+
+      <div class="grid">
+        <div>
+          <h3 class="step">1 · The job you'd be replacing</h3>
+          <div class="field">
+            <label for="cat">Type of work</label>
+            <select id="cat"></select>
+          </div>
+          <div class="row2" style="margin-bottom:14px;">
+            <div class="field" style="margin-bottom:0;">
+              <label for="salary">Annual cost, fully loaded ($)</label>
+              <input type="number" id="salary" value="65000" step="1000" min="0">
+              <p class="hint">Salary plus payroll tax, benefits, software, and space.</p>
+            </div>
+            <div class="field" style="margin-bottom:0;">
+              <label for="fte-hours">Standard hours / week</label>
+              <input type="number" id="fte-hours" value="40" step="1" min="1" max="80">
+              <p class="hint">The baseline that salary is set against. Lower it for a role that's part-time by design.</p>
+            </div>
+          </div>
+          <div class="row2" style="margin-bottom:14px;">
+            <div class="field" style="margin-bottom:0;">
+              <label for="hours">Hours / week on this work</label>
+              <input type="number" id="hours" value="34" step="1" min="0" max="80">
+              <p class="hint">Only the hours you're actually trying to automate.</p>
+            </div>
+            <div class="field" style="margin-bottom:0;">
+              <label for="rate">Cover rate ($ / hr)</label>
+              <input type="number" id="rate" value="45" step="1" min="0">
+              <p class="hint">Whoever reviews the AI and absorbs whatever's left over. Usually more senior, and more expensive, than the person leaving.</p>
+            </div>
+          </div>
+          <p class="warnline" id="warn-hours"></p>
+
+          <h3 class="step">2 · What happens to the person</h3>
+          <div class="modecards" role="group" aria-label="What happens to the person">
+            <button type="button" class="modecard" id="mode-eliminate" aria-pressed="true">
+              <strong>The role goes</strong>
+              <span>You stop paying the salary — and inherit every duty the job covered.</span>
+            </button>
+            <button type="button" class="modecard" id="mode-redeploy" aria-pressed="false">
+              <strong>They stay, freed up</strong>
+              <span>Salary keeps being paid. The AI buys back hours instead of cash.</span>
+            </button>
+          </div>
+          <p class="hint" id="mode-hint"></p>
+
+          <h3 class="step">3 · How much of it AI actually takes over</h3>
+          <div class="field">
+            <label for="coverage">Share of those hours AI can handle end to end: <span id="cov-out">60</span>%</label>
+            <input type="range" id="coverage" min="0" max="100" value="60" step="5">
+            <p class="hint" id="cov-hint"></p>
+          </div>
+          <div class="field">
+            <label for="oversight">Time spent reviewing AI output: <span id="ov-out">20</span>% of the hours it took over</label>
+            <input type="range" id="oversight" min="0" max="80" value="20" step="1">
+            <p class="hint">At 0% nobody checks anything. Whatever the AI gets wrong ships.</p>
+          </div>
+          <div class="field">
+            <label for="sensitivity">Cost of an error that slips through</label>
+            <select id="sensitivity">
+              <option value="0.3">Low — caught downstream, cheap to fix</option>
+              <option value="0.6" selected>Typical — someone redoes the work</option>
+              <option value="1">High — reaches a customer or a regulator</option>
+            </select>
+          </div>
+
+          <h3 class="step">4 · What you'd buy</h3>
+          <div class="tabs" role="tablist" aria-label="AI deployment model">
+            <button class="tab active" role="tab" id="tab-saas" aria-selected="true" aria-controls="fields-saas" tabindex="0" data-model="saas">Per-seat SaaS</button>
+            <button class="tab" role="tab" id="tab-api" aria-selected="false" aria-controls="fields-api" tabindex="-1" data-model="api">API / pay-as-you-go</button>
+            <button class="tab" role="tab" id="tab-infra" aria-selected="false" aria-controls="fields-infra" tabindex="-1" data-model="infra">Dedicated infrastructure</button>
+          </div>
+
+          <div class="modelfields active" id="fields-saas" role="tabpanel" aria-labelledby="tab-saas" tabindex="0">
+            <div class="row3">
+              <div class="field"><label for="saas-seats">Seats bought</label><input type="number" id="saas-seats" value="10" min="0"></div>
+              <div class="field"><label for="saas-price">Price / seat / mo ($)</label><input type="number" id="saas-price" value="30" min="0"></div>
+              <div class="field"><label for="saas-adopt">Actually using it (%)</label><input type="number" id="saas-adopt" value="60" min="0" max="100"></div>
+            </div>
+            <p class="price-status">Seat prices change. Check your vendor's current plans before committing — most enterprise tiers are quoted annually and billed whether seats get used or not.</p>
+          </div>
+
+          <div class="modelfields" id="fields-api" role="tabpanel" aria-labelledby="tab-api" tabindex="0">
+            <div class="field">
+              <label for="api-tier">Model tier</label>
+              <select id="api-tier">
+                <option value="0.5|3">Small / fast — around $0.50 in, $3 out per M tokens</option>
+                <option value="2.5|15" selected>Mid-tier workhorse — around $2.50 in, $15 out</option>
+                <option value="5|30">Frontier — around $5 in, $30 out</option>
+                <option value="custom">Custom rates</option>
+              </select>
+            </div>
+            <div class="row3">
+              <div class="field"><label for="api-tasks">Tasks / month</label><input type="number" id="api-tasks" value="2400" min="0"></div>
+              <div class="field"><label for="api-words-in">Input words / task</label><input type="number" id="api-words-in" value="1200" min="0"></div>
+              <div class="field"><label for="api-words-out">Output words / task</label><input type="number" id="api-words-out" value="300" min="0"></div>
+            </div>
+            <div class="row3" style="margin-top:14px;">
+              <div class="field"><label for="api-pin">$ / M input tokens</label><input type="number" id="api-pin" value="2.5" step="0.1" min="0"></div>
+              <div class="field"><label for="api-pout">$ / M output tokens</label><input type="number" id="api-pout" value="15" step="0.5" min="0"></div>
+              <div class="field"><label for="api-attempts">Attempts / task</label><input type="number" id="api-attempts" value="1.3" step="0.1" min="1"></div>
+            </div>
+            <div class="field" style="margin-top:14px;">
+              <label for="api-reasoning">Hidden reasoning tokens</label>
+              <select id="api-reasoning">
+                <option value="0">None — plain generation</option>
+                <option value="2" selected>Moderate — reasoning model, ~3× the output tokens</option>
+                <option value="5">Heavy — agent loops and long chains, ~6×</option>
+              </select>
+              <p class="hint">Reasoning models bill for tokens you never see. This is the single most common reason a real invoice lands well above the estimate.</p>
+            </div>
+            <p class="price-status">Published rates move often and vary by context length, service tier, and caching. Treat the tiers above as ballpark and confirm current numbers with the provider before you budget against them.</p>
+          </div>
+
+          <div class="modelfields" id="fields-infra" role="tabpanel" aria-labelledby="tab-infra" tabindex="0">
+            <div class="row3">
+              <div class="field"><label for="infra-server">Compute / mo ($)</label><input type="number" id="infra-server" value="5000" min="0"></div>
+              <div class="field"><label for="infra-setup">Setup, one-time ($)</label><input type="number" id="infra-setup" value="20000" min="0"></div>
+              <div class="field"><label for="infra-amort">Spread over (months)</label><input type="number" id="infra-amort" value="12" min="1"></div>
+            </div>
+            <p class="price-status">GPU rates vary widely by provider and commitment length, and this cost is fixed whether you run 100 tasks or 100,000.</p>
+          </div>
+
+          <h3 class="step">5 · One-time costs of making the switch</h3>
+          <div class="row3">
+            <div class="field"><label for="impl">Build &amp; integration ($)</label><input type="number" id="impl" value="15000" min="0"></div>
+            <div class="field" id="field-transition"><label for="transition">Severance &amp; handover ($)</label><input type="number" id="transition" value="12000" min="0"></div>
+            <div class="field"><label for="onetime-amort">Spread over (months)</label><input type="number" id="onetime-amort" value="12" min="1"></div>
+          </div>
+          <p class="hint" style="margin-top:2px;">Included in the first-year view only. Switch the summary to steady state to see the run-rate once these are paid off.</p>
+
+          <div class="card" style="margin-top:24px;">
+            <h3 id="trap-label">Hidden trap check</h3>
+            <p id="trap-note"></p>
+            <p id="trap-note-2" class="hint" style="font-size:13px;"></p>
+          </div>
+        </div>
+
+        <div class="sticky-col">
+          <div class="receipt">
+            <p class="receipt-title">Monthly summary</p>
+            <p class="receipt-sub" id="receipt-date"></p>
+            <div style="margin-bottom:16px;">
+              <div class="segmented" role="group" aria-label="Time horizon">
+                <button type="button" id="view-first" aria-pressed="true">First year</button>
+                <button type="button" id="view-steady" aria-pressed="false">Steady state</button>
+              </div>
+            </div>
+            <div>
+              <div class="rline head" id="row-baseline"><span id="lbl-baseline">Salary you stop paying</span><span id="r-emp">$0</span></div>
+              <div class="rline"><span>AI platform</span><span id="r-platform">$0</span></div>
+              <div class="rline" id="row-oversight"><span>Reviewing output</span><span id="r-oversight">$0</span></div>
+              <div class="rline" id="row-residual"><span>Task work AI can't take</span><span id="r-residual">$0</span></div>
+              <div class="rline" id="row-orphan"><span>Their other duties, absorbed</span><span id="r-orphan">$0</span></div>
+              <div class="rline" id="row-rework"><span>Fixing what slips through</span><span id="r-rework">$0</span></div>
+              <div class="rline" id="row-onetime"><span>Switching costs, spread</span><span id="r-onetime">$0</span></div>
+              <div class="rline total"><span id="lbl-total">Cost of the AI approach</span><span id="r-total">$0</span></div>
+              <div class="rline" id="row-freed"><span>Hours freed / month</span><span id="r-freed">0</span></div>
+              <div class="rline" id="row-freedval"><span>What those hours are worth</span><span id="r-freedval">$0</span></div>
+              <div class="rline total" style="border-top:none; margin-top:0; padding-top:4px;"><span id="lbl-net">Net per month</span><span id="r-net">$0</span></div>
+            </div>
+            <div aria-live="polite">
+              <div class="stamp" id="stamp">Too close to call</div>
+              <p class="rnote" id="net-note"></p>
+            </div>
+
+            <div class="compare">
+              <div class="cmp-row">
+                <div class="cmp-label"><span id="cmp-emp-label">Salary saved</span><span id="cmp-emp-val">$0</span></div>
+                <div class="cmp-bar"><div class="cmp-seg" id="seg-emp" style="background:var(--accent); width:100%;"></div></div>
+              </div>
+              <div class="cmp-row">
+                <div class="cmp-label"><span>AI approach</span><span id="cmp-ai-val">$0</span></div>
+                <div class="cmp-bar" id="cmp-ai-bar"></div>
+              </div>
+              <div class="cmp-key">
+                <span><i class="swatch" style="background:var(--warn)"></i>Platform</span>
+                <span><i class="swatch" style="background:var(--accent)"></i>Review</span>
+                <span><i class="swatch" style="background:#7C6BD6"></i>Work left behind</span>
+                <span><i class="swatch" style="background:var(--loss)"></i>Rework</span>
+                <span><i class="swatch" style="background:var(--text-muted)"></i>Switching</span>
+              </div>
+            </div>
+
+            <p class="rnote">A directional estimate, not a quote. It only counts what you can put a number on — the list further down covers what you can't.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="quality">
+      <h2>What happens to the work itself</h2>
+      <p class="section-note">Cost is only half the decision. This projects how the output changes against the same work done by the person today, based on how much judgment the job needs, how much of it you're automating, and how closely anyone checks.</p>
+      <div class="card" style="padding:26px;">
+        <div class="qbands" id="q-bands"></div>
+        <p class="hint" id="q-explain" style="font-size:13.5px; max-width:660px; margin-top:14px;"></p>
+        <p class="qlegend" style="margin-top:10px;">A modelled estimate from how much judgment this work needs, how much of it you're automating, and how closely it gets checked — not a measurement of any specific tool.</p>
+        <div class="qbars" id="q-bars"></div>
+        <p class="qlegend">Centre line = the work as it's done today. Right of it is better, left is worse.</p>
+        <div class="qlists">
+          <div><h4>What gets better</h4><ul class="qgain" id="q-gains"></ul></div>
+          <div><h4>What gets worse</h4><ul class="qloss" id="q-losses"></ul></div>
+        </div>
+      </div>
+    </section>
+
+    <section id="breakeven">
+      <h2>Where pay-as-you-go and dedicated infrastructure cross</h2>
+      <p class="section-note">API cost rises with volume; dedicated infrastructure is a fixed floor. This always compares the numbers in the API and Dedicated infrastructure tabs, whichever one you have open.</p>
+      <div class="card" style="padding:24px;">
+        <div style="height:300px;" id="chart-holder"><canvas id="breakevenChart"></canvas></div>
+        <p class="chart-fallback" id="chart-fallback">The chart library couldn't load, so the crossover is described below instead.</p>
+        <p class="rnote" id="breakeven-note" style="margin-top:14px;"></p>
+      </div>
+    </section>
+
+    <section id="hidden-costs">
+      <h2>Costs this calculator can't price in</h2>
+      <p class="section-note">Ask about these before finalizing any AI-replacement decision. Several have sunk projects that looked good on the spreadsheet.</p>
+      <ul class="checklist">
+        <li>Prompt and integration maintenance every time the underlying model changes underneath you.</li>
+        <li>Customer trust and brand damage when AI errors reach people directly.</li>
+        <li>Compliance and liability exposure for mistakes an experienced employee would have caught.</li>
+        <li>Rehiring and retraining at market rate if the approach doesn't work — usually more than the salary you cut.</li>
+        <li>The undocumented knowledge that leaves with the person: who to call, which exceptions matter, why a rule exists.</li>
+        <li>Morale and attrition among the staff who absorb the transition and watch it happen.</li>
+      </ul>
+    </section>
+
+  </div>
+</main>
+
+<footer>A planning aid, not a guarantee. Verify current vendor pricing before deciding.</footer>
+
+<script>
+"use strict";
+
+/* ===== COMPUTE START ===== */
+const CATS = {
+  data:     {label:"Data entry & transcription", ov:8,  minOv:5,  cov:85, judgment:.15, risk:"Low",
+             note:"Structured, repetitive work is the safest thing to automate. Spot-checks are usually enough.",
+             gains:["Output stops varying by how tired someone is","Volume spikes cost the same as a quiet week"],
+             losses:["Nobody notices when the source data itself is wrong","Unusual formats fail quietly rather than loudly"]},
+  admin:    {label:"Scheduling & admin", ov:10, minOv:5,  cov:70, judgment:.22, risk:"Low",
+             note:"Rule-based and low-stakes, but conflicts, VIPs, and exceptions still need somewhere to land.",
+             gains:["Instant response outside working hours","Nothing gets forgotten in a busy week"],
+             losses:["No read on who actually matters and who can wait","Awkward situations get handled literally, not tactfully"]},
+  support:  {label:"Customer support", ov:20, minOv:15, cov:60, judgment:.45, risk:"Medium",
+             note:"Refunds, escalations, and angry customers are where support automation breaks first.",
+             gains:["Replies in seconds, at any hour","Policy answers stop varying between agents"],
+             losses:["Frustrated customers get looped instead of escalated","Goodwill judgment calls disappear","Repeat customers stop being recognized as repeat customers"]},
+  sales:    {label:"Sales outreach", ov:20, minOv:15, cov:65, judgment:.5, risk:"Medium",
+             note:"Over-automated outreach quietly wrecks response rates before anyone traces the cause.",
+             gains:["Far more contacts touched per week","Follow-up stops slipping"],
+             losses:["Messages read as generic and get filtered","Buying signals in a reply go unnoticed","Domain reputation risk from volume"]},
+  content:  {label:"Content & copywriting", ov:30, minOv:25, cov:65, judgment:.55, risk:"Medium-high",
+             note:"Factual slips and off-brand voice get through unless someone actually reads it, not skims it.",
+             gains:["Drafts arrive in minutes","Never stuck on a blank page"],
+             losses:["Confident factual errors in plausible prose","House voice drifts toward generic","Nothing genuinely surprising ever gets written"]},
+  coding:   {label:"Software development", ov:35, minOv:30, cov:45, judgment:.65, risk:"Medium-high",
+             note:"Cutting review and testing trades a visible cost now for a larger, less visible one later.",
+             gains:["Boilerplate and tests written far faster","Unfamiliar languages become approachable"],
+             losses:["Subtle bugs that pass review and surface in production","Security and dependency issues slip in","Nobody on the team understands the code that shipped"]},
+  research: {label:"Research & analysis", ov:40, minOv:35, cov:40, judgment:.75, risk:"High",
+             note:"Confident wrong conclusions are the hardest error to catch without doing the work yourself.",
+             gains:["Ground covered much faster","More sources considered per hour"],
+             losses:["Fabricated or misattributed citations","Conclusions that sound rigorous and aren't","No instinct for which finding is the important one"]},
+  other:    {label:"Other high-judgment work", ov:45, minOv:40, cov:30, judgment:.8, risk:"High",
+             note:"Without a track record for this kind of work, assume oversight needs are high until proven otherwise.",
+             gains:["A faster starting point than a blank page"],
+             losses:["Unknown failure modes you'll discover in production","Context and relationships that took years to build"]}
+};
+
+const WEEKS_PER_MONTH = 52/12;
+
+function clamp(v, lo, hi){ return Math.min(hi, Math.max(lo, v)); }
+
+// Output quality is a modelled band, not a measurement. Four steps only —
+// anything finer would imply precision these coefficients don't have.
+const QBANDS = [
+  {min:92, label:'Holds up',               tone:'gain', desc:'What you\'re automating is routine enough, and checked closely enough, that the output should stand up to what the person produces today.'},
+  {min:78, label:'Slips noticeably',       tone:'warn', desc:'Expect more mistakes reaching finished work. Survivable if someone clearly owns review and the failures are cheap to catch downstream.'},
+  {min:60, label:'Degrades significantly', tone:'warn', desc:'At this much judgment and this little review, errors will reach whoever receives the work. Rework is the visible part of that; reputation is the part that never shows up on a spreadsheet.'},
+  {min:0,  label:'Severe degradation',     tone:'loss', desc:'You are automating work that runs on judgment and barely checking it. This is the shape of most publicly embarrassing AI failures.'}
+];
+
+function bandFor(score){ return QBANDS.find(b => score >= b.min) || QBANDS[QBANDS.length-1]; }
+
+function deltaWord(d){
+  const a = Math.abs(d);
+  if(a < 5) return 'about the same';
+  const dir = d > 0 ? 'better' : 'worse';
+  if(a < 20) return 'slightly ' + dir;
+  if(a < 50) return dir;
+  return 'much ' + dir;
+}
+
+function compute(i){
+  const cat = CATS[i.cat] || CATS.support;
+  const fteHours   = Math.max(1, i.fteHours);
+  const taskHours  = clamp(i.taskHours, 0, fteHours);
+  const coverage   = clamp(i.coverage, 0, 100)/100;
+  const ov         = clamp(i.oversight, 0, 80);
+  const rate       = Math.max(0, i.coverRate);
+  const eliminate  = i.mode !== 'redeploy';
+
+  const employeeHourly    = i.salary / (fteHours * 52);
+  const monthlyTaskHours  = taskHours * WEEKS_PER_MONTH;
+  const monthlyOtherHours = (fteHours - taskHours) * WEEKS_PER_MONTH;
+  const fullLoadedMonthly = Math.max(0, i.salary) / 12;
+
+  const automatedHours = monthlyTaskHours * coverage;
+  const residualHours  = monthlyTaskHours * (1 - coverage);
+
+  // Review has diminishing returns and never catches everything.
+  const reviewEff    = ov > 0 ? ov / (ov + cat.minOv) : 0;
+  const errorExposure = cat.judgment * coverage * (1 - reviewEff);
+
+  const oversightHours = automatedHours * (ov/100);
+  const reworkHours    = automatedHours * errorExposure * i.sensitivity;
+
+  let platformCost = 0, trap = "", trap2 = "";
+  if(i.model === 'saas'){
+    const seats = Math.max(0, i.saasSeats), price = Math.max(0, i.saasPrice);
+    const adopt = clamp(i.saasAdopt, 0, 100);
+    platformCost = seats * price;
+    const wasted = seats * (1 - adopt/100) * price;
+    trap = "You pay for all " + seats + " seats whether they get used or not. At " +
+           adopt + "% real usage, about " + money(wasted) + "/month is buying nothing.";
+    trap2 = "Seat licences also don't scale down mid-contract. If the workload drops, the bill doesn't.";
+  } else if(i.model === 'api'){
+    const tasks    = Math.max(0, i.apiTasks);
+    const attempts = Math.max(1, i.apiAttempts);
+    const tokensIn  = Math.max(0, i.wordsIn) / 0.75;
+    const tokensOut = (Math.max(0, i.wordsOut) / 0.75) * (1 + Math.max(0, i.reasoning));
+    const perTask = (tokensIn/1e6)*Math.max(0,i.pin) + (tokensOut/1e6)*Math.max(0,i.pout);
+    platformCost = tasks * perTask * attempts;
+    trap = "That works out to " + money(perTask*attempts, 3) + " per task. Token use is the one cost here that " +
+           "grows without anyone approving it — an agent that re-reads a long document on every loop can multiply this overnight.";
+    if(tasks > 0 && automatedHours > 0){
+      const minsPerTask = (automatedHours * 60) / tasks;
+      if(minsPerTask < 2){
+        trap2 = "Sanity check: " + tasks.toLocaleString() + " tasks against " + Math.round(automatedHours) +
+                " automated hours implies each one took the employee under " + minsPerTask.toFixed(1) +
+                " minutes. Either the task count is high or you're automating more hours than you've entered.";
+      } else if(minsPerTask > 240){
+        trap2 = "Sanity check: that's about " + Math.round(minsPerTask/60) + " hours of human work per task. " +
+                "If tasks are really that large, the token estimates per task are probably too low.";
+      } else {
+        trap2 = "Sanity check: this maps to roughly " + Math.round(minsPerTask) + " minutes of human work per task, which is plausible.";
+      }
+    }
+  } else {
+    const server = Math.max(0, i.infraServer);
+    const amort  = Math.max(1, i.infraAmort);
+    platformCost = server + (Math.max(0, i.infraSetup) / amort);
+    trap = "This cost is identical whether you run 100 tasks or 100,000 this month. Dedicated infrastructure only " +
+           "wins at high, steady volume — and someone has to keep it running.";
+    trap2 = "The setup figure is spread over " + amort + " months here. Cancel earlier and the whole amount still got spent.";
+  }
+
+  // Severance only exists if the role actually goes.
+  const switchingBase = Math.max(0, i.implCost) + (eliminate ? Math.max(0, i.transitionCost) : 0);
+  const oneTimeMonthly = i.firstYear ? switchingBase / Math.max(1, i.oneTimeAmort) : 0;
+
+  // You cannot make 85% of a person redundant. Either the whole role goes — in which
+  // case you save the whole salary but inherit every duty it covered — or it doesn't,
+  // and you save no cash at all. These are genuinely different sums.
+  let baseline, oversightCost, residualCost, orphanCost, reworkCost, total, net;
+  let freedHours = 0, freedValue = 0;
+
+  if(eliminate){
+    baseline      = fullLoadedMonthly;
+    oversightCost = oversightHours * rate;
+    residualCost  = residualHours  * rate;   // whoever is left picks this up, at their rate
+    orphanCost    = monthlyOtherHours * rate; // the rest of the job nobody was replacing
+    reworkCost    = reworkHours * rate;
+    total = platformCost + oversightCost + residualCost + orphanCost + reworkCost + oneTimeMonthly;
+    net   = baseline - total;
+  } else {
+    // The salary keeps being paid, so the AI is pure added spend. The payoff is hours —
+    // and review and cleanup come out of the same person's week.
+    baseline = 0;
+    oversightCost = residualCost = orphanCost = reworkCost = 0;
+    total = platformCost + oneTimeMonthly;
+    freedHours = automatedHours - oversightHours - reworkHours;
+    freedValue = freedHours * employeeHourly;
+    net = freedValue - total;
+  }
+
+  const threshold = Math.max(200, fullLoadedMonthly * 0.03);
+
+  // Quality projection, indexed against the work as done today (=100).
+  const q = {
+    accuracy:    100 - 95 * errorExposure,
+    edge:        100 - 100 * cat.judgment * coverage * (1 - reviewEff * .6),
+    context:     100 - 70 * coverage * (1 - reviewEff * .4),
+    consistency: 100 + 55 * coverage * (1 - cat.judgment * .5),
+    speed:       100 + 110 * coverage * (1 - ov/100)
+  };
+  Object.keys(q).forEach(k => q[k] = clamp(q[k], 0, 220));
+
+  const qualityIndex = Math.round(clamp(100 * (1 - errorExposure), 0, 100));
+  const band = bandFor(qualityIndex);
+  const qualityHolds = qualityIndex >= 78;
+
+  // Verdict has to answer the money question and the quality question together,
+  // otherwise a plan that is cheaper and materially worse reads as a clean win.
+  let stampText, stampTone;
+  if(eliminate){
+    if(net > threshold && qualityHolds){ stampTone = 'gain'; stampText = 'Saves money'; }
+    else if(net > threshold)           { stampTone = 'even'; stampText = 'Cheaper, but worse'; }
+    else if(net < -threshold)          { stampTone = 'loss'; stampText = 'Costs more'; }
+    else                               { stampTone = 'even'; stampText = 'Too close to call'; }
+  } else {
+    if(freedHours <= 0)                { stampTone = 'loss'; stampText = 'Costs time and money'; }
+    else if(net > threshold && qualityHolds){ stampTone = 'gain'; stampText = 'Frees up real time'; }
+    else if(net > threshold)           { stampTone = 'even'; stampText = 'Frees time, lowers quality'; }
+    else if(net < -threshold)          { stampTone = 'loss'; stampText = 'Not worth the spend'; }
+    else                               { stampTone = 'even'; stampText = 'Too close to call'; }
+  }
+
+  return {
+    cat, eliminate, baseline, platformCost, oversightCost, residualCost, orphanCost,
+    reworkCost, oneTimeMonthly, total, net, threshold,
+    employeeHourly, fullLoadedMonthly, monthlyTaskHours, monthlyOtherHours,
+    automatedHours, residualHours, oversightHours, reworkHours, freedHours, freedValue,
+    reviewEff, errorExposure, qualityIndex, qualityHolds, band, q,
+    trap, trap2, coveragePct: Math.round(coverage*100), ov,
+    belowMin: ov < cat.minOv, taskHoursClamped: taskHours !== i.taskHours,
+    stampText, stampTone
+  };
+}
+
+function money(n, dp){
+  if(!isFinite(n)) return "$0";
+  if(dp) return '$' + n.toFixed(dp);
+  return '$' + Math.round(n).toLocaleString();
+}
+/* ===== COMPUTE END ===== */
+
+/* ---------- DOM wiring ---------- */
+const $ = id => document.getElementById(id);
+const catSel = $('cat');
+Object.entries(CATS).forEach(([k,v]) => {
+  const o = document.createElement('option');
+  o.value = k; o.textContent = v.label; catSel.appendChild(o);
+});
+catSel.value = 'support';
+
+const NUM_FIELDS = ['salary','fte-hours','hours','rate','coverage','oversight','saas-seats','saas-price',
+  'saas-adopt','api-tasks','api-words-in','api-words-out','api-pin','api-pout','api-attempts',
+  'infra-server','infra-setup','infra-amort','impl','transition','onetime-amort'];
+const SELECT_FIELDS = ['sensitivity','api-reasoning','api-tier'];
+const DEFAULTS = {};
+[...NUM_FIELDS, ...SELECT_FIELDS].forEach(id => DEFAULTS[id] = $(id).value);
+DEFAULTS.cat = 'support';
+
+let currentModel = 'saas';
+let currentMode = 'eliminate';
+let firstYear = true;
+
+function num(id){ const v = parseFloat($(id).value); return isFinite(v) ? v : 0; }
+
+function readInputs(){
+  return {
+    cat: catSel.value,
+    salary: num('salary'),
+    fteHours: num('fte-hours'),
+    taskHours: num('hours'),
+    coverRate: num('rate'),
+    mode: currentMode,
+    coverage: num('coverage'),
+    oversight: num('oversight'),
+    sensitivity: parseFloat($('sensitivity').value) || 0.6,
+    model: currentModel,
+    saasSeats: num('saas-seats'), saasPrice: num('saas-price'), saasAdopt: num('saas-adopt'),
+    apiTasks: num('api-tasks'), wordsIn: num('api-words-in'), wordsOut: num('api-words-out'),
+    pin: num('api-pin'), pout: num('api-pout'), apiAttempts: num('api-attempts'),
+    reasoning: parseFloat($('api-reasoning').value) || 0,
+    infraServer: num('infra-server'), infraSetup: num('infra-setup'), infraAmort: num('infra-amort'),
+    implCost: num('impl'), transitionCost: num('transition'), oneTimeAmort: num('onetime-amort'),
+    firstYear
+  };
+}
+
+/* ---------- tabs ---------- */
+const tabButtons = [...document.querySelectorAll('.tab')];
+function activateTab(model, focusIt){
+  if(!document.getElementById('fields-' + model)) model = 'saas';
+  tabButtons.forEach(b => {
+    const active = b.dataset.model === model;
+    b.classList.toggle('active', active);
+    b.setAttribute('aria-selected', active ? 'true' : 'false');
+    b.tabIndex = active ? 0 : -1;
+  });
+  document.querySelectorAll('.modelfields').forEach(f => f.classList.remove('active'));
+  $('fields-' + model).classList.add('active');
+  currentModel = model;
+  if(focusIt) $('tab-' + model).focus();
+  render();
+}
+tabButtons.forEach((btn, i) => {
+  btn.addEventListener('click', () => activateTab(btn.dataset.model, false));
+  btn.addEventListener('keydown', e => {
+    let idx = i;
+    if(e.key === 'ArrowRight') idx = (i+1) % tabButtons.length;
+    else if(e.key === 'ArrowLeft') idx = (i-1+tabButtons.length) % tabButtons.length;
+    else if(e.key === 'Home') idx = 0;
+    else if(e.key === 'End') idx = tabButtons.length - 1;
+    else return;
+    e.preventDefault();
+    activateTab(tabButtons[idx].dataset.model, true);
+  });
+});
+
+/* ---------- eliminate vs redeploy ---------- */
+function setMode(mode){
+  currentMode = (mode === 'redeploy') ? 'redeploy' : 'eliminate';
+  $('mode-eliminate').setAttribute('aria-pressed', currentMode === 'eliminate' ? 'true' : 'false');
+  $('mode-redeploy').setAttribute('aria-pressed', currentMode === 'redeploy' ? 'true' : 'false');
+  render();
+}
+$('mode-eliminate').addEventListener('click', () => setMode('eliminate'));
+$('mode-redeploy').addEventListener('click', () => setMode('redeploy'));
+
+/* ---------- horizon toggle ---------- */
+function setHorizon(first){
+  firstYear = first;
+  $('view-first').setAttribute('aria-pressed', first ? 'true' : 'false');
+  $('view-steady').setAttribute('aria-pressed', first ? 'false' : 'true');
+  render();
+}
+$('view-first').addEventListener('click', () => setHorizon(true));
+$('view-steady').addEventListener('click', () => setHorizon(false));
+
+/* ---------- quality bars ---------- */
+const Q_ROWS = [
+  {key:'accuracy',    label:'Factual accuracy',      caption:'How often the output is simply right.'},
+  {key:'edge',        label:'Edge cases',            caption:'The unusual requests that don\'t match the pattern.'},
+  {key:'context',     label:'Context & memory',      caption:'Knowing the history, the people, and why things are the way they are.'},
+  {key:'consistency', label:'Consistency',           caption:'The same input producing the same standard of output.'},
+  {key:'speed',       label:'Turnaround',            caption:'How fast the work comes back.'}
+];
+const qBands = $('q-bands');
+const bandChips = QBANDS.map(b => {
+  const chip = document.createElement('div');
+  chip.className = 'qbandchip';
+  chip.textContent = b.label;
+  qBands.appendChild(chip);
+  return chip;
+});
+
+const qBars = $('q-bars');
+Q_ROWS.forEach(r => {
+  const wrap = document.createElement('div');
+  wrap.innerHTML =
+    '<div class="qbar-label"><span>' + r.label + '</span><span class="qbar-delta" id="qd-' + r.key + '"></span></div>' +
+    '<div class="qtrack"><div class="qbase"></div><div class="qfill" id="qf-' + r.key + '"></div></div>' +
+    '<p class="qcaption">' + r.caption + '</p>';
+  qBars.appendChild(wrap);
+});
+
+/* ---------- render ---------- */
+$('receipt-date').textContent = new Date().toLocaleDateString(undefined, {year:'numeric', month:'long'});
+
+function render(){
+  const inputs = readInputs();
+  const r = compute(inputs);
+
+  $('cov-out').textContent = Math.round(clamp(inputs.coverage,0,100));
+  $('ov-out').textContent  = Math.round(clamp(inputs.oversight,0,80));
+  $('cov-hint').textContent = 'Typical starting point for ' + r.cat.label.toLowerCase() + ': around ' +
+    r.cat.cov + '%. The rest still needs a person.';
+
+  let warn = '';
+  if(inputs.salary <= 0) warn = 'Enter the role\'s annual cost — without it there is nothing to compare the AI against.';
+  else if(r.taskHoursClamped) warn = 'Hours on this work can\'t exceed the standard week — capped at ' + inputs.fteHours + ' for the math.';
+  else if(inputs.taskHours <= 0) warn = 'This role spends no hours on the work you\'re automating, so there is nothing here for AI to take over.';
+  $('warn-hours').textContent = warn;
+
+  // mode-dependent rows
+  const show = (id, on) => { $(id).style.display = on ? 'flex' : 'none'; };
+  show('row-baseline',  r.eliminate);
+  show('row-oversight', r.eliminate);
+  show('row-residual',  r.eliminate);
+  show('row-orphan',    r.eliminate);
+  show('row-rework',    r.eliminate);
+  show('row-freed',    !r.eliminate);
+  show('row-freedval', !r.eliminate);
+  show('row-onetime',   firstYear);
+  $('field-transition').style.display = r.eliminate ? 'block' : 'none';
+  $('lbl-total').textContent = r.eliminate ? 'Cost of the AI approach' : 'New money out the door';
+  $('lbl-net').textContent   = r.eliminate ? 'Net per month' : 'Net value per month';
+
+  $('mode-hint').textContent = r.eliminate
+    ? 'The whole role goes, so you save the full ' + money(r.fullLoadedMonthly) + ' a month — but the ' +
+      Math.round(r.monthlyOtherHours) + ' hours a month of duties outside this task don\'t disappear with it. ' +
+      'They\'re charged below at the cover rate. If nobody actually absorbs them, that cost turns into service quietly getting worse instead.'
+    : 'Nobody leaves, so there is no salary saving to book. The AI is new spend, and the return is time — ' +
+      'measured after review and cleanup come out of the same person\'s week.';
+
+  $('r-emp').textContent       = money(r.baseline);
+  $('r-platform').textContent  = money(r.platformCost);
+  $('r-oversight').textContent = money(r.oversightCost);
+  $('r-residual').textContent  = money(r.residualCost);
+  $('r-orphan').textContent    = money(r.orphanCost);
+  $('r-rework').textContent    = money(r.reworkCost);
+  $('r-onetime').textContent   = money(r.oneTimeMonthly);
+  $('r-total').textContent     = money(r.total);
+  $('r-freed').textContent     = (r.freedHours >= 0 ? '' : '−') + Math.abs(r.freedHours).toFixed(0) + ' hrs';
+  $('r-freedval').textContent  = (r.freedValue >= 0 ? '' : '−') + money(Math.abs(r.freedValue));
+  $('r-net').textContent       = (r.net >= 0 ? '+' : '−') + money(Math.abs(r.net));
+
+  const stamp = $('stamp');
+  stamp.className = 'stamp ' + r.stampTone;
+  stamp.textContent = r.stampText;
+
+  const horizon = firstYear ? 'in the first year' : 'at steady state';
+  let netNote;
+  if(r.eliminate){
+    netNote = r.net >= 0
+      ? 'Saves about ' + money(r.net) + ' a month ' + horizon + ' — ' + money(r.net*12) + ' a year.'
+      : 'Costs about ' + money(Math.abs(r.net)) + ' a month more than keeping the person ' + horizon + ' — ' + money(Math.abs(r.net)*12) + ' a year.';
+  } else if(r.freedHours <= 0){
+    netNote = 'Review and cleanup consume more time than the AI takes off this person\'s plate. ' +
+              'You would be paying ' + money(r.total) + ' a month to make their week busier.';
+  } else {
+    netNote = 'Frees about ' + Math.round(r.freedHours) + ' hours a month, worth roughly ' + money(r.freedValue) +
+              ' at this person\'s loaded rate, against ' + money(r.total) + ' of new spend. That only becomes real money if those hours go somewhere valuable.';
+  }
+  if(r.net > r.threshold && !r.qualityHolds){
+    netNote += ' Bear in mind the projected quality lands at "' + r.band.label.toLowerCase() +
+               '" — you are buying this with work that gets measurably worse, and only part of that shows up as a number here.';
+  }
+  $('net-note').textContent = netNote;
+
+  $('trap-note').textContent = r.trap;
+  $('trap-note-2').textContent = r.trap2;
+
+  // comparison bars
+  const segs = [
+    {v:r.platformCost,   c:'var(--warn)'},
+    {v:r.oversightCost,  c:'var(--accent)'},
+    {v:r.residualCost + r.orphanCost, c:'#7C6BD6'},
+    {v:r.reworkCost,     c:'var(--loss)'},
+    {v:r.oneTimeMonthly, c:'var(--text-muted)'}
+  ];
+  const topVal = r.eliminate ? r.baseline : Math.max(r.freedValue, 0);
+  const max = Math.max(topVal, r.total, 1);
+  $('cmp-emp-label').textContent = r.eliminate ? 'Salary saved' : 'Value of freed time';
+  $('seg-emp').style.width = (topVal / max * 100) + '%';
+  $('cmp-emp-val').textContent = money(topVal);
+  $('cmp-ai-val').textContent  = money(r.total);
+  const bar = $('cmp-ai-bar');
+  bar.innerHTML = '';
+  segs.forEach(s => {
+    if(s.v <= 0) return;
+    const d = document.createElement('div');
+    d.className = 'cmp-seg';
+    d.style.width = (s.v / max * 100) + '%';
+    d.style.background = s.c;
+    bar.appendChild(d);
+  });
+
+  // quality band
+  QBANDS.forEach((b, idx) => {
+    bandChips[idx].className = 'qbandchip' + (b === r.band ? ' on ' + b.tone : '');
+  });
+  $('q-explain').textContent = r.band.desc +
+    (r.belowMin ? ' Review is set to ' + r.ov + '%, below the ' + r.cat.minOv + '% this kind of work usually needs.' : '') +
+    ' ' + r.cat.note;
+
+  Q_ROWS.forEach(row => {
+    const val = r.q[row.key];
+    const fill = $('qf-' + row.key);
+    const delta = $('qd-' + row.key);
+    const pctFromCentre = clamp((val - 100) / 120, -1, 1); // 120 pts maps to half the track
+    const half = 50;
+    if(pctFromCentre >= 0){
+      fill.style.left = half + '%';
+      fill.style.right = 'auto';
+      fill.style.width = (pctFromCentre * half) + '%';
+      fill.style.background = 'var(--gain)';
+    } else {
+      fill.style.right = half + '%';
+      fill.style.left = 'auto';
+      fill.style.width = (-pctFromCentre * half) + '%';
+      fill.style.background = 'var(--loss)';
+    }
+    const d = Math.round(val - 100);
+    delta.textContent = deltaWord(d);
+    delta.style.color = Math.abs(d) < 5 ? 'var(--text-muted)' : (d > 0 ? 'var(--gain)' : 'var(--loss)');
+  });
+
+  const gains = $('q-gains'), losses = $('q-losses');
+  gains.innerHTML = ''; losses.innerHTML = '';
+  r.cat.gains.forEach(t => { const li = document.createElement('li'); li.textContent = t; gains.appendChild(li); });
+  r.cat.losses.forEach(t => { const li = document.createElement('li'); li.textContent = t; losses.appendChild(li); });
+  if(r.coveragePct === 0){
+    const li = document.createElement('li');
+    li.textContent = 'Nothing is being automated at 0% coverage, so nothing changes.';
+    gains.innerHTML = ''; losses.innerHTML = ''; gains.appendChild(li);
+  }
+
+  renderBreakeven();
+}
+
+/* ---------- breakeven ---------- */
+const hasChart = typeof Chart !== 'undefined';
+let chart = null, currentVolIndex = null;
+
+if(hasChart){
+  Chart.register({
+    id: 'currentVolLine',
+    afterDraw(c){
+      if(currentVolIndex == null || !c.chartArea) return;
+      const {ctx, chartArea:{top, bottom}, scales:{x}} = c;
+      const xPos = x.getPixelForValue(currentVolIndex);
+      ctx.save();
+      ctx.strokeStyle = '#E7E9EE';
+      ctx.setLineDash([4,4]);
+      ctx.beginPath();
+      ctx.moveTo(xPos, top); ctx.lineTo(xPos, bottom); ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.font = '11px IBM Plex Mono';
+      ctx.fillStyle = '#8890A0';
+      ctx.fillText('your volume', Math.min(xPos + 6, c.chartArea.right - 70), top + 14);
+      ctx.restore();
+    }
+  });
+} else {
+  $('chart-holder').style.display = 'none';
+  $('chart-fallback').style.display = 'block';
+}
+
+function niceStep(rough){
+  if(!isFinite(rough) || rough <= 0) return 1;
+  const mag = Math.pow(10, Math.floor(Math.log10(rough)));
+  const n = rough / mag;
+  return (n < 1.5 ? 1 : n < 3 ? 2 : n < 7 ? 5 : 10) * mag;
+}
+
+function renderBreakeven(){
+  const pin = num('api-pin'), pout = num('api-pout');
+  const wordsIn = num('api-words-in'), wordsOut = num('api-words-out');
+  const attempts = Math.max(1, num('api-attempts'));
+  const reasoning = parseFloat($('api-reasoning').value) || 0;
+  const server = num('infra-server'), setup = num('infra-setup');
+  const amort = Math.max(1, num('infra-amort'));
+  const currentTasks = Math.max(0, num('api-tasks'));
+
+  const infraFixed = server + setup/amort;
+  const tokensIn = wordsIn/0.75, tokensOut = (wordsOut/0.75)*(1+reasoning);
+  const costPerTask = ((tokensIn/1e6)*pin + (tokensOut/1e6)*pout) * attempts;
+  const crossover = costPerTask > 0 ? infraFixed/costPerTask : Infinity;
+
+  const CAP = 2000000;
+  let maxVol;
+  if(isFinite(crossover)) maxVol = clamp(Math.max(crossover*1.4, currentTasks*1.6, 3000), 3000, CAP);
+  else maxVol = Math.max(currentTasks*1.6, 3000);
+
+  const step = niceStep(maxVol/18);
+  const volumes = [], apiCosts = [], infraCosts = [];
+  for(let v = 0; v <= maxVol + step/2; v += step){
+    volumes.push(v); apiCosts.push(costPerTask*v); infraCosts.push(infraFixed);
+  }
+
+  const inRange = currentTasks <= volumes[volumes.length-1];
+  currentVolIndex = inRange
+    ? volumes.reduce((best, v, idx) => Math.abs(v-currentTasks) < Math.abs(volumes[best]-currentTasks) ? idx : best, 0)
+    : null;
+
+  let note;
+  if(costPerTask <= 0){
+    note = 'Enter API token rates and task sizes to see where the two deployment models cross.';
+  } else if(!isFinite(crossover) || crossover > CAP){
+    note = 'Dedicated infrastructure would only pay off past roughly ' + Math.round(crossover).toLocaleString() +
+           ' tasks a month — far beyond most companies. Pay-as-you-go is almost certainly cheaper here.';
+  } else if(currentTasks < crossover){
+    note = 'At ' + currentTasks.toLocaleString() + ' tasks a month, pay-as-you-go is cheaper. The crossover sits around ' +
+           Math.round(crossover).toLocaleString() + ' tasks a month — about ' +
+           (crossover/Math.max(currentTasks,1)).toFixed(1) + '× your current volume.';
+  } else {
+    note = 'At ' + currentTasks.toLocaleString() + ' tasks a month you\'ve passed the crossover (~' +
+           Math.round(crossover).toLocaleString() + ' tasks), so dedicated infrastructure is now the cheaper option — ' +
+           'assuming the volume holds.';
+  }
+  if(!inRange && currentTasks > 0 && isFinite(crossover)){
+    note += ' Your volume sits beyond the right edge of the chart.';
+  }
+  $('breakeven-note').textContent = note;
+
+  if(!hasChart) return;
+  const labels = volumes.map(v => Math.round(v).toLocaleString());
+  if(chart){
+    chart.data.labels = labels;
+    chart.data.datasets[0].data = apiCosts;
+    chart.data.datasets[1].data = infraCosts;
+    chart.update('none');
+    return;
+  }
+  chart = new Chart($('breakevenChart').getContext('2d'), {
+    type:'line',
+    data:{labels, datasets:[
+      {label:'Pay-as-you-go', data:apiCosts, borderColor:'#E8B34A', backgroundColor:'transparent', tension:0, pointRadius:0, borderWidth:2},
+      {label:'Dedicated infrastructure', data:infraCosts, borderColor:'#2FC7A0', backgroundColor:'transparent', tension:0, pointRadius:0, borderWidth:2}
+    ]},
+    options:{
+      responsive:true, maintainAspectRatio:false, animation:false,
+      interaction:{mode:'index', intersect:false},
+      plugins:{
+        legend:{labels:{color:'#E7E9EE', font:{family:'Inter'}, boxWidth:12}},
+        tooltip:{callbacks:{label: c => c.dataset.label + ': ' + money(c.parsed.y)}}
+      },
+      scales:{
+        x:{title:{display:true, text:'Tasks / month', color:'#8890A0'}, ticks:{color:'#8890A0', maxTicksLimit:7}, grid:{color:'#242938'}},
+        y:{beginAtZero:true, title:{display:true, text:'Monthly cost ($)', color:'#8890A0'}, ticks:{color:'#8890A0', callback:v => '$' + v.toLocaleString()}, grid:{color:'#242938'}}
+      }
+    }
+  });
+}
+
+/* ---------- interactions ---------- */
+catSel.addEventListener('change', () => {
+  const c = CATS[catSel.value];
+  $('oversight').value = c.ov;
+  $('coverage').value = c.cov;
+  render();
+});
+
+$('api-tier').addEventListener('change', () => {
+  const v = $('api-tier').value;
+  if(v !== 'custom'){
+    const [pin, pout] = v.split('|');
+    $('api-pin').value = pin;
+    $('api-pout').value = pout;
+  }
+  render();
+});
+['api-pin','api-pout'].forEach(id => $(id).addEventListener('input', () => { $('api-tier').value = 'custom'; }));
+
+NUM_FIELDS.forEach(id => $(id).addEventListener('input', render));
+SELECT_FIELDS.filter(id => id !== 'api-tier').forEach(id => $(id).addEventListener('change', render));
+
+/* ---------- save & share menu ---------- */
+const actionsTrigger = $('actions-trigger');
+const actionsPanel   = $('actions-panel');
+const actionItems    = ['btn-link','btn-summary','btn-print','btn-reset'].map(id => $(id));
+let actionsOpen = false;
+
+function setActions(open, focusFirst){
+  actionsOpen = open;
+  actionsPanel.classList.toggle('open', open);
+  actionsTrigger.setAttribute('aria-expanded', open ? 'true' : 'false');
+  if(open){
+    $('toolbar-status').textContent = '';   // toast and panel share the same corner
+    if(focusFirst) actionItems[0].focus();
+  }
+}
+function closeActions(returnFocus){
+  if(!actionsOpen) return;
+  setActions(false, false);
+  if(returnFocus) actionsTrigger.focus();
+}
+
+actionsTrigger.addEventListener('click', () => setActions(!actionsOpen, false));
+actionsTrigger.addEventListener('keydown', e => {
+  if(e.key === 'ArrowDown' || e.key === 'Down'){ e.preventDefault(); setActions(true, true); }
+});
+actionItems.forEach((item, idx) => {
+  item.addEventListener('keydown', e => {
+    if(e.key === 'ArrowDown' || e.key === 'Down'){ e.preventDefault(); actionItems[(idx+1) % actionItems.length].focus(); }
+    else if(e.key === 'ArrowUp' || e.key === 'Up'){ e.preventDefault(); actionItems[(idx-1+actionItems.length) % actionItems.length].focus(); }
+    else if(e.key === 'Home'){ e.preventDefault(); actionItems[0].focus(); }
+    else if(e.key === 'End'){ e.preventDefault(); actionItems[actionItems.length-1].focus(); }
+  });
+});
+// clicks inside the menu shouldn't reach the document handler that closes it
+$('actions').addEventListener('click', e => e.stopPropagation());
+document.addEventListener('click', () => closeActions(false));
+document.addEventListener('keydown', e => { if(e.key === 'Escape') closeActions(true); });
+
+
+function copyText(str){
+  if(navigator.clipboard && window.isSecureContext){
+    return navigator.clipboard.writeText(str).catch(() => legacyCopy(str));
+  }
+  return legacyCopy(str);
+}
+function legacyCopy(str){
+  try{
+    const ta = document.createElement('textarea');
+    ta.value = str; ta.style.position = 'fixed'; ta.style.opacity = '0';
+    document.body.appendChild(ta);
+    ta.focus(); ta.select();
+    document.execCommand('copy');
+    document.body.removeChild(ta);
+  }catch(e){
+    flash('Couldn\'t reach the clipboard — copy the text from the address bar instead.');
+  }
+  return Promise.resolve();
+}
+function flash(msg){
+  const s = $('toolbar-status');
+  s.textContent = msg;
+  setTimeout(() => { if(s.textContent === msg) s.textContent = ''; }, 3000);
+}
+
+const STATE_FIELDS = [...NUM_FIELDS, ...SELECT_FIELDS];
+
+function buildShareUrl(){
+  const params = new URLSearchParams();
+  STATE_FIELDS.forEach(id => params.set(id, $(id).value));
+  params.set('cat', catSel.value);
+  params.set('model', currentModel);
+  params.set('horizon', firstYear ? 'first' : 'steady');
+  params.set('mode', currentMode);
+  return location.href.split(/[?#]/)[0] + '?' + params.toString();
+}
+function loadStateFromUrl(){
+  const params = new URLSearchParams(location.search);
+  if(![...params].length) return;
+  STATE_FIELDS.forEach(id => { if(params.has(id)) $(id).value = params.get(id); });
+  if(params.has('cat') && CATS[params.get('cat')]) catSel.value = params.get('cat');
+  if(params.has('model')) currentModel = params.get('model');
+  if(params.has('horizon')) firstYear = params.get('horizon') !== 'steady';
+  if(params.has('mode')) currentMode = params.get('mode') === 'redeploy' ? 'redeploy' : 'eliminate';
+}
+
+$('btn-link').addEventListener('click', () => {
+  closeActions(false);
+  const url = buildShareUrl();
+  try{ history.replaceState(null, '', url); }catch(e){}
+  copyText(url).then(() => flash('Link copied — every input is in the URL.'));
+});
+
+$('btn-summary').addEventListener('click', () => {
+  closeActions(false);
+  const r = compute(readInputs());
+  const L = [];
+  L.push('AI replacement reality check \u2014 ' + new Date().toLocaleDateString(), '');
+  L.push('Role: ' + r.cat.label);
+  L.push('Plan: ' + (r.eliminate ? 'eliminate the role' : 'keep the person, redeploy their time'));
+  L.push('Deployment: ' + $('tab-' + currentModel).textContent);
+  L.push('Horizon: ' + (firstYear ? 'first year (includes switching costs)' : 'steady state'));
+  L.push('Automated: ' + r.coveragePct + '% of task hours, reviewed at ' + r.ov + '%', '');
+  if(r.eliminate){
+    L.push('Salary you stop paying:    ' + money(r.baseline) + '/mo');
+    L.push('AI platform:               ' + money(r.platformCost) + '/mo');
+    L.push('Reviewing output:          ' + money(r.oversightCost) + '/mo');
+    L.push('Task work AI can\'t take:   ' + money(r.residualCost) + '/mo');
+    L.push('Other duties, absorbed:    ' + money(r.orphanCost) + '/mo');
+    L.push('Fixing what slips through: ' + money(r.reworkCost) + '/mo');
+    L.push('Switching costs, spread:   ' + money(r.oneTimeMonthly) + '/mo');
+    L.push('Total cost of AI approach: ' + money(r.total) + '/mo');
+  } else {
+    L.push('Salary saved:              $0 (nobody leaves)');
+    L.push('AI platform:               ' + money(r.platformCost) + '/mo');
+    L.push('Switching costs, spread:   ' + money(r.oneTimeMonthly) + '/mo');
+    L.push('New spend:                 ' + money(r.total) + '/mo');
+    L.push('Hours freed, net:          ' + r.freedHours.toFixed(0) + ' hrs/mo');
+    L.push('Value of those hours:      ' + money(r.freedValue) + '/mo');
+  }
+  L.push('Net:                       ' + (r.net >= 0 ? '+' : '-') + money(Math.abs(r.net)) + '/mo', '');
+  L.push('Verdict: ' + r.stampText);
+  L.push('Projected output quality: ' + r.band.label.toLowerCase() + ' (modelled, not measured)');
+  L.push('Quality risk for this category: ' + r.cat.risk);
+  copyText(L.join('\n')).then(() => flash('Summary copied.'));
+});
+
+$('btn-print').addEventListener('click', () => { closeActions(false); window.print(); });
+
+$('btn-reset').addEventListener('click', () => {
+  closeActions(false);
+  Object.entries(DEFAULTS).forEach(([id, v]) => { if(id !== 'cat') $(id).value = v; });
+  catSel.value = DEFAULTS.cat;
+  try{ history.replaceState(null, '', location.href.split(/[?#]/)[0]); }catch(e){}
+  setMode('eliminate');
+  setHorizon(true);
+  activateTab('saas', false);
+  flash('Reset to defaults.');
+});
+
+/* ---------- boot ---------- */
+loadStateFromUrl();
+setMode(currentMode);
+setHorizon(firstYear);
+activateTab(currentModel, false);
+</script>
+</body>
+</html>
